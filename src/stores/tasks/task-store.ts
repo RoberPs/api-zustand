@@ -1,14 +1,19 @@
 import { Task,TaskStatus } from "../../types"
 import { create } from 'zustand';
 import {devtools} from 'zustand/middleware'
+import { v4 as uuidv4 } from 'uuid';
+
 
 
 
 interface TaskState{
    
-    tasks:Record<string,Task>    
+     /* tasks:Record<string,Task> */ 
+     tasks:{[key:string]:Task} 
+    
 }
 interface ActionTask{
+
     
     draggingTaskId?:string;
     getTaskByStatus:(status:TaskStatus)=> Task[]
@@ -16,6 +21,8 @@ interface ActionTask{
     removeDraggingTaskId:()=>void;
     changeStatus:(taskId:string, status:TaskStatus) => void;
     /* ontaskDrop:(status:TaskStatus) =>void */
+
+    addTask:(title:string,status:TaskStatus) =>void
 }
 
 export const useTaskStore = create<TaskState & ActionTask>()(
@@ -59,6 +66,20 @@ export const useTaskStore = create<TaskState & ActionTask>()(
                       }
                 }))
             },
+
+            addTask:(title:string,status:TaskStatus) =>{
+                
+                const newTask = {id:uuidv4(), title, status}
+
+                set(state=>({
+
+                    tasks:{
+                        ...state.tasks,
+                        [newTask.id]:newTask
+                    }
+
+                }))
+            }
 
             // !combinar 3 metodos
 /*             ontaskDrop:(status:TaskStatus)=>{
