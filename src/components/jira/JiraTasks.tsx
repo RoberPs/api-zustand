@@ -1,10 +1,9 @@
 import { IoAddOutline, IoCheckmarkCircleOutline} from 'react-icons/io5';
 import { TaskStatus,Task } from '../../types/tasks';
 import SingleTask from './SingleTask';
-import { useTaskStore } from '../../stores';
+
 import clsx from 'clsx';
-import React, { useState } from 'react';
-import Swal, { SweetAlertResult } from 'sweetalert2';
+import { useTasks } from '../../hooks/useTasks';
 
 
 interface Props {
@@ -13,68 +12,20 @@ interface Props {
   tasks:Task[]
 }
 
-export const JiraTasks = ({tasks, title, status }: Props) => {
+export const JiraTasks = ({tasks, title,status}: Props) => {
 
-   
-  const [onDrageOver, setOnDragOver] = useState(false)
-
-  const isDragging = useTaskStore(state=>!!state.draggingTaskId) //evalua true o false
-  /* const onchangeStatus = useTaskStore(state=>state.changeStatus)
-  const draggingTaskId = useTaskStore(state=>state.draggingTaskId) */
-  const ontaskDrop = useTaskStore(state => state.ontaskDrop)
-
-  const newTask = useTaskStore(state=>state.addTask)
-
-   
-  const handleDragOver=(e:React.DragEvent<HTMLDivElement>)=>{
-
-    e.preventDefault();
-    /* console.log('dragOver') */
-    setOnDragOver(true)
-  };
-
-  const handleDragLeave = (e:React.DragEvent<HTMLDivElement>) =>{
-     e.preventDefault();
-     setOnDragOver(false)
-  };
-
-  const handleDragDrop = (e:React.DragEvent<HTMLDivElement>) =>{
-     e.preventDefault();
-     setOnDragOver(false)
-     //onchangeStatus(draggingTaskId!,status)
-      ontaskDrop(status) 
-  };
-
-
-  const handleNewTask = async()=>{
-      
+   const{
+    //Properties
+    isDragging,
     
-     const resp:SweetAlertResult = await Swal.fire({
-          title:'Nueva Tarea',
-          input:'text',
-          inputLabel:'Nombre de la tarea',
-          inputPlaceholder:'Ingresa el nombre de la tarea',
-          showCancelButton:true,
-          cancelButtonColor:"#d33",
-          confirmButtonText:'ok',
-          confirmButtonColor: "#4f46e5",
-          inputValidator:(value)=>{
-             if(!value){
-                return 'Debe de indicar el nombre de la tarea'
-             }
-          }
-     })
-     /* console.log(resp) */
-
-     if(!resp.isConfirmed) return;
-     newTask(resp.value,status)
-
-     return resp
-     
-
-
-
-  }
+    //Methods
+    onDrageOver,
+    handleDragOver,
+    handleDragLeave,
+    handleDragDrop,
+    handleNewTask
+   } = useTasks({status})
+  
 
   return (
     <div 
