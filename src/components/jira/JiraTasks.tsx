@@ -7,32 +7,25 @@ import React, { useState } from 'react';
 import Swal, { SweetAlertResult } from 'sweetalert2';
 
 
-
-
-
 interface Props {
   title:string
   status:TaskStatus
   tasks:Task[]
 }
 
-
 export const JiraTasks = ({tasks, title, status }: Props) => {
 
    
-   const [onDrageOver, setOnDragOver] = useState(false)
+  const [onDrageOver, setOnDragOver] = useState(false)
 
   const isDragging = useTaskStore(state=>!!state.draggingTaskId) //evalua true o false
-  const onchangeStatus = useTaskStore(state=>state.changeStatus)
-  const draggingTaskId = useTaskStore(state=>state.draggingTaskId)
-  /* const ontaskDrop = useTaskStore(state => state.ontaskDrop) */
+  /* const onchangeStatus = useTaskStore(state=>state.changeStatus)
+  const draggingTaskId = useTaskStore(state=>state.draggingTaskId) */
+  const ontaskDrop = useTaskStore(state => state.ontaskDrop)
 
   const newTask = useTaskStore(state=>state.addTask)
 
    
-
- 
-
   const handleDragOver=(e:React.DragEvent<HTMLDivElement>)=>{
 
     e.preventDefault();
@@ -48,8 +41,8 @@ export const JiraTasks = ({tasks, title, status }: Props) => {
   const handleDragDrop = (e:React.DragEvent<HTMLDivElement>) =>{
      e.preventDefault();
      setOnDragOver(false)
-     onchangeStatus(draggingTaskId!,status)
-     /* ontaskDrop(status) */
+     //onchangeStatus(draggingTaskId!,status)
+      ontaskDrop(status) 
   };
 
 

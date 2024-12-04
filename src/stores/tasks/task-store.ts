@@ -1,6 +1,8 @@
 import { Task,TaskStatus } from "../../types"
-import { create } from 'zustand';
-import {devtools} from 'zustand/middleware'
+import { create, StateCreator } from 'zustand';
+import {devtools, persist} from 'zustand/middleware'
+import { immer } from "zustand/middleware/immer";
+import { produce } from "immer";
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -11,33 +13,28 @@ interface TaskState{
      /* tasks:Record<string,Task> */ 
      tasks:{[key:string]:Task} 
     
-}
-interface ActionTask{
+     draggingTaskId?:string; // tarea que se mueve
 
-    
-    draggingTaskId?:string;
-    getTaskByStatus:(status:TaskStatus)=> Task[]
-    setDraggingTaskId:(taskId:string)=>void;
-    removeDraggingTaskId:()=>void;
-    changeStatus:(taskId:string, status:TaskStatus) => void;
-    /* ontaskDrop:(status:TaskStatus) =>void */
-
-    addTask:(title:string,status:TaskStatus) =>void
+     getTaskByStatus:(status:TaskStatus)=> Task[]
+     setDraggingTaskId:(taskId:string)=>void;
+     removeDraggingTaskId:()=>void;
+     changeStatus:(taskId:string, status:TaskStatus) => void;
+     ontaskDrop:(status:TaskStatus) =>void 
+     addTask:(title:string,status:TaskStatus) =>void
+     totalTasks:() => number
 }
 
-export const useTaskStore = create<TaskState & ActionTask>()(
-    
-    devtools(
-            (set,get)=>({
+
+const storeApiTask: StateCreator<TaskState ,[["zustand/immer", never]]> = (set,get)=>({
              
             draggingTaskId:undefined,
         
             tasks:{
                 
-                "A-1" :{ id:'1', title:'tarea-1', status:'pending'},
-                "A-2" :{ id:'2', title:'tarea-2', status:'in-progress'},
-                "A-3" :{ id:'3', title:'tarea-3', status:'done'},
-                "A-4" :{ id:'4', title:'tarea-4', status:'pending'},
+                "ABC-1": { id:'ABC-1', title:'tarea-1', status:'pending'},
+                "ABC-2": { id:'ABC-2', title:'tarea-2', status:'in-progress'},
+                "ABC-3": { id:'ABC-3', title:'tarea-3', status:'done'},
+                "ABC-4": { id:'ABC-4', title:'tarea-4', status:'pending'},
             },
             getTaskByStatus:(status:TaskStatus)=>{
 
@@ -51,38 +48,45 @@ export const useTaskStore = create<TaskState & ActionTask>()(
                 set({draggingTaskId:undefined})
             },
             changeStatus:(taskId:string, status:TaskStatus)=>{
-                
-                //obtener la tarea por id argumento / drag del objeto de tareas
-                const task = get().tasks[taskId];
-                //el status de esa tarea se añade el status argumento
-                task.status = status
-
-                set((state)=>({
-                      
-                      //Actualiza la tarea en el state
-                      tasks: {
-                         ...state.tasks,
-                         [taskId]:task 
-                      }
-                }))
+      
+              set(state =>{
+                 state.tasks[taskId]={
+                    ...state.tasks[taskId],
+                    status,
+                 }
+              })
+              //Posibles errores por la inmutabilidad del objeto 
             },
 
             addTask:(title:string,status:TaskStatus) =>{
                 
                 const newTask = {id:uuidv4(), title, status}
+                 
+                //? FORMAS DE MUTAR STATE
+                
+                // 1-IMMER DE ZUSTAND/MIDDLEWARE
+                set(state=>{
+                    state.tasks[newTask.id]=newTask
+                })
 
-                set(state=>({
+                // 2-PRODUCE DE IMMER
+                // set(produce((state:TaskState)=>{
+                //     state.tasks[newTask.id] = newTask
+                // }))    
 
-                    tasks:{
-                        ...state.tasks,
-                        [newTask.id]:newTask
-                    }
+                // 3-SPREAD OPERATOR
+                //set(state=>({
+                //    tasks:{
+                //        ...state.tasks,
+                //        [newTask.id]:newTask
+                //    }
+                //}))
 
-                }))
-            }
+
+            },
 
             // !combinar 3 metodos
-/*             ontaskDrop:(status:TaskStatus)=>{
+            ontaskDrop:(status:TaskStatus)=>{
 
                 const taskId = get().draggingTaskId; //puede ser un task o undefined
                 
@@ -90,11 +94,32 @@ export const useTaskStore = create<TaskState & ActionTask>()(
 
                 get().changeStatus(taskId,status); // Si se mueve cambia el status
                 get().removeDraggingTaskId(); 
-            } */
+            },
             
-                  
-        })
-   )
-)
-/* export const useTaskStore = create<TaskState & ActionsState>()(storeApi) */
+            totalTasks:()=>{
+                
+                const tasks = get().tasks
+               
+                const totales = Object.keys(tasks).length
+
+                return totales
+            
+            },
+                 
+})
+     
+    
+
+
+
+export const useTaskStore = create<TaskState>()(
+  
+  devtools(
+     persist(
+        immer(storeApiTask),
+        
+        {name:'task-store'}
+      )
+    )
+) 
 
